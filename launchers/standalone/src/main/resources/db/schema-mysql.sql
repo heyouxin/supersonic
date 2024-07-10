@@ -81,6 +81,7 @@ CREATE TABLE `s2_agent` (
                             `updated_by` varchar(100) COLLATE utf8_unicode_ci DEFAULT NULL,
                             `updated_at` datetime DEFAULT NULL,
                             `enable_search` int(11) DEFAULT NULL,
+                            `prompt_config` text DEFAULT NULL,
                             PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 

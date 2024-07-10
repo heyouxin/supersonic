@@ -1,5 +1,5 @@
 server:
-  port: 9080
+  port: 7008
   compression:
     enabled: true
     min-response-size: 1024

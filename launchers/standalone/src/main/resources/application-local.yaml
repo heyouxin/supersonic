@@ -1,15 +1,21 @@
 spring:
+#  datasource:
+#    driver-class-name: org.h2.Driver
+#    schema: classpath:db/schema-h2.sql
+#    data: classpath:db/data-h2.sql
+#    url: jdbc:h2:mem:semantic;DATABASE_TO_UPPER=false
+#    username: root
+#    password: semantic
+#  h2:
+#    console:
+#      path: /h2-console/semantic
+#      enabled: true
+
   datasource:
-    driver-class-name: org.h2.Driver
-    schema: classpath:db/schema-h2.sql
-    data: classpath:db/data-h2.sql
-    url: jdbc:h2:mem:semantic;DATABASE_TO_UPPER=false
+    url: jdbc:mysql://localhost:3306/gtja_config2?useUnicode=true&characterEncoding=UTF-8&useSSL=false
     username: root
-    password: semantic
-  h2:
-    console:
-      path: /h2-console/semantic
-      enabled: true
+    password: aa123456
+    driver-class-name: com.mysql.jdbc.Driver
   config:
     import:
       - classpath:langchain4j-local.yaml
