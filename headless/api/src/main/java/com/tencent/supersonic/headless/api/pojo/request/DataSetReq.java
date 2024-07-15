@@ -10,6 +10,8 @@ import java.util.List;
 @Data
 public class DataSetReq extends SchemaItem {
 
+    //hyx
+    private String ddl;
     private Long domainId;
 
     private DataSetDetail dataSetDetail;

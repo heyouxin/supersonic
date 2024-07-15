@@ -15,6 +15,9 @@ import java.util.Map;
 @Data
 public class ModelReq extends SchemaItem {
 
+    //hyx
+    private String ddl;
+
     private Long databaseId;
 
     private Long domainId;

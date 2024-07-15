@@ -17,6 +17,8 @@ import java.util.List;
 @NoArgsConstructor
 public class SchemaElement implements Serializable {
 
+    //hyx
+    private String ddl;
     private Long dataSet;
     private String dataSetName;
     private Long model;

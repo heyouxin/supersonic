@@ -69,8 +69,16 @@ public class SqlExecutor implements ChatExecutor {
         }
 
         QuerySqlReq sqlReq = QuerySqlReq.builder()
-                .sql(parseInfo.getSqlInfo().getCorrectedS2SQL())
+                .sql(parseInfo.getSqlInfo().getParsedS2SQL())
                 .build();
+
+
+        //hyx这里要修正这里已经是执行，要找到生成
+        //        if("LLM_S2SQL".equals(parseInfo.getQueryMode())) {
+        //            parseInfo.getSqlInfo().setQuerySQL(parseInfo.getSqlInfo().getParsedS2SQL());
+        //            sqlReq.setSql(parseInfo.getSqlInfo().getParsedS2SQL());
+        //
+        //        }
         sqlReq.setSqlInfo(parseInfo.getSqlInfo());
         sqlReq.setDataSetId(parseInfo.getDataSetId());
         long startTime = System.currentTimeMillis();

@@ -15,7 +15,8 @@ import java.util.stream.Collectors;
 
 @Data
 public class DataSetResp extends SchemaItem {
-
+    //hyx
+    private String ddl;
     private Long domainId;
 
     private DataSetDetail dataSetDetail;

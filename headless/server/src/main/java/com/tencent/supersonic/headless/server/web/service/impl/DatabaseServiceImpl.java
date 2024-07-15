@@ -144,6 +144,20 @@ public class DatabaseServiceImpl extends ServiceImpl<DatabaseDOMapper, DatabaseD
         return queryWithColumns(sql, DatabaseConverter.convert(databaseResp));
     }
 
+    //hyx
+    public SemanticQueryResp executeSqlddl(String sql, Long id) {
+        DatabaseResp databaseResp = getDatabase(id);
+        return queryWithColumnsDdl(sql, DatabaseConverter.convert(databaseResp));
+    }
+
+    private SemanticQueryResp queryWithColumnsDdl(String sql, Database database) {
+        SemanticQueryResp queryResultWithColumns = new SemanticQueryResp();
+        SqlUtils sqlUtils = this.sqlUtils.init(database);
+        log.info("query SQL: {}", sql);
+        sqlUtils.queryInternal(sql, queryResultWithColumns);
+        return queryResultWithColumns;
+    }
+
     private void fillColumnComment(String sql, DatabaseResp databaseResp,
                                    SemanticQueryResp semanticQueryResp) {
         Pair<String, String> dbTableName = getDbTableName(sql, databaseResp);

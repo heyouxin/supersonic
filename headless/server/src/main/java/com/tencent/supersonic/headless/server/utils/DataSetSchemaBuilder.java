@@ -30,7 +30,9 @@ public class DataSetSchemaBuilder {
     public static DataSetSchema build(DataSetSchemaResp resp) {
         DataSetSchema dataSetSchema = new DataSetSchema();
         dataSetSchema.setQueryConfig(resp.getQueryConfig());
+        //hyx
         SchemaElement dataSet = SchemaElement.builder()
+                .ddl(resp.getDdl())
                 .dataSet(resp.getId())
                 .dataSetName(resp.getName())
                 .id(resp.getId())

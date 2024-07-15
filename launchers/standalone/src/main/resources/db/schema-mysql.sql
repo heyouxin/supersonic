@@ -352,6 +352,7 @@ CREATE TABLE `s2_model` (
                             `filter_sql` varchar(1000) DEFAULT NULL ,
                             `tag_object_id` int(11) DEFAULT '0',
                             `ext` varchar(1000) DEFAULT NULL,
+                            `ddl` text DEFAULT NULL,
                             PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
@@ -524,7 +525,8 @@ CREATE TABLE s2_data_set
     updated_by  VARCHAR(255),
     query_config VARCHAR(3000),
     `admin` varchar(3000) DEFAULT NULL,
-    `admin_org` varchar(3000) DEFAULT NULL
+    `admin_org` varchar(3000) DEFAULT NULL,
+    `ddl` text DEFAULT NULL
 )ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS s2_tag(

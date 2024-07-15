@@ -9,6 +9,8 @@ import com.tencent.supersonic.common.pojo.enums.EventType;
 import com.tencent.supersonic.common.pojo.enums.StatusEnum;
 import com.tencent.supersonic.common.pojo.exception.InvalidArgumentException;
 import com.tencent.supersonic.common.util.JsonUtil;
+//import com.tencent.supersonic.headless.api.pojo.*;
+import com.tencent.supersonic.headless.api.pojo.Field;
 import com.tencent.supersonic.headless.api.pojo.Dim;
 import com.tencent.supersonic.headless.api.pojo.Identify;
 import com.tencent.supersonic.headless.api.pojo.ItemDateFilter;
@@ -19,13 +21,15 @@ import com.tencent.supersonic.headless.api.pojo.request.FieldRemovedReq;
 import com.tencent.supersonic.headless.api.pojo.request.MetaBatchReq;
 import com.tencent.supersonic.headless.api.pojo.request.MetricReq;
 import com.tencent.supersonic.headless.api.pojo.request.ModelReq;
+//import com.tencent.supersonic.headless.api.pojo.response.*;
+import com.tencent.supersonic.headless.api.pojo.response.SemanticQueryResp;
 import com.tencent.supersonic.headless.api.pojo.response.DatabaseResp;
 import com.tencent.supersonic.headless.api.pojo.response.DimensionResp;
 import com.tencent.supersonic.headless.api.pojo.response.DomainResp;
 import com.tencent.supersonic.headless.api.pojo.response.MetricResp;
 import com.tencent.supersonic.headless.api.pojo.response.ModelResp;
 import com.tencent.supersonic.headless.api.pojo.response.UnAvailableItemResp;
-import com.tencent.supersonic.headless.api.pojo.response.DataSetResp;
+//import com.tencent.supersonic.headless.api.pojo.response.DataSetResp;
 import com.tencent.supersonic.headless.server.persistence.dataobject.DateInfoDO;
 import com.tencent.supersonic.headless.server.persistence.dataobject.ModelDO;
 import com.tencent.supersonic.headless.server.persistence.repository.DateInfoRepository;
@@ -37,7 +41,8 @@ import com.tencent.supersonic.headless.server.web.service.DimensionService;
 import com.tencent.supersonic.headless.server.web.service.DomainService;
 import com.tencent.supersonic.headless.server.web.service.MetricService;
 import com.tencent.supersonic.headless.server.web.service.ModelService;
-import com.tencent.supersonic.headless.server.web.service.DataSetService;
+//hyx
+//import com.tencent.supersonic.headless.server.web.service.DataSetService;
 import com.tencent.supersonic.headless.server.utils.ModelConverter;
 import com.tencent.supersonic.headless.server.utils.NameCheckUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -75,7 +80,7 @@ public class ModelServiceImpl implements ModelService {
 
     private UserService userService;
 
-    private DataSetService dataSetService;
+    //private DataSetService dataSetService;
 
     private DateInfoRepository dateInfoRepository;
 
@@ -85,7 +90,7 @@ public class ModelServiceImpl implements ModelService {
                             @Lazy MetricService metricService,
                             DomainService domainService,
                             UserService userService,
-                            DataSetService dataSetService,
+                            //DataSetService dataSetService,
                             DateInfoRepository dateInfoRepository) {
         this.modelRepository = modelRepository;
         this.databaseService = databaseService;
@@ -93,7 +98,7 @@ public class ModelServiceImpl implements ModelService {
         this.metricService = metricService;
         this.domainService = domainService;
         this.userService = userService;
-        this.dataSetService = dataSetService;
+        //this.dataSetService = dataSetService;
         this.dateInfoRepository = dateInfoRepository;
     }
 
@@ -101,6 +106,99 @@ public class ModelServiceImpl implements ModelService {
     @Transactional
     public ModelResp createModel(ModelReq modelReq, User user) throws Exception {
         checkName(modelReq);
+        //hyx 这里引入ddl
+        DatabaseService d = this.databaseService;
+        //Long i = d.getDatabase(modelReq.getDatabaseId);
+        String tbName = modelReq.getModelDetail().getTableQuery();
+        String spt = "\\.";
+        String[] parts = tbName.split(spt);
+        String db = parts[0];
+        String tb = parts[1];
+        String sql1 = String.format(
+                "SELECT TABLE_NAME, TABLE_COMMENT\n"
+                        +
+                "FROM INFORMATION_SCHEMA.TABLES "
+                        +
+                "WHERE TABLE_SCHEMA = '%s' AND TABLE_NAME = '%s'", db, tb);
+        String sql2 = String.format(
+                "SELECT "
+                        +
+                "    COLUMN_NAME, "
+                        +
+                "    DATA_TYPE, "
+                        +
+                "    COLUMN_COMMENT "
+                        +
+                "FROM "
+                        +
+                "    INFORMATION_SCHEMA.COLUMNS "
+                        +
+                "WHERE "
+                        +
+                "    TABLE_SCHEMA = '%s' "
+                        +
+                "    AND TABLE_NAME = '%s'; ", db, tb);
+        //String sql2 = String.format("select name from  cmf_manager_info limit 5 ");
+        //SqlUtils sqlUtils = d.init(database);
+        SemanticQueryResp s = d.executeSqlddl(sql2, modelReq.getDatabaseId());
+        List<Map<String, Object>> res = s.getResultList();
+        String ddl = String.format("CREATE TABLE `%s`(", tb);
+        List<String> useCol = new ArrayList<>();
+        List<Identify> idenCol = modelReq.getModelDetail().getIdentifiers();
+        List<Dim> dimCol = modelReq.getModelDetail().getDimensions();
+        List<Measure> meaCol = modelReq.getModelDetail().getMeasures();
+        //这是所有列
+        List<Field> fieldCol = modelReq.getModelDetail().getFields();
+        //转成map
+        Map<String, String> fieldMap = new HashMap<>();
+        for (Field c : fieldCol) {
+            fieldMap.put(c.getFieldName(), c.getDataType());
+        }
+        for (Identify c : idenCol) {
+            useCol.add(c.getBizName());
+        }
+        for (Dim c : dimCol) {
+            useCol.add(c.getBizName());
+        }
+        for (Measure c : meaCol) {
+            useCol.add(c.getBizName());
+        }
+        //这是所有
+        // for (Field c:field_col){
+        //    use_col.add(c.getFieldName());
+        //}
+        boolean filter = true;
+        //hyx 可以根据所选的维度和指标进行对ddl筛选，减少长度。
+        int cnt = 1;
+        for (Map<String, Object> map : res) {
+            //v = (String)map.get("COLUMN_NAME");
+            if (filter) {
+                if (useCol.contains((String) map.get("COLUMN_NAME"))) {
+                    if (cnt == res.size()) {
+                        ddl = String.format("%s `%s` %s COMMENT '%s'", ddl, (String) map.get("COLUMN_NAME"),
+                                (String) map.get("DATA_TYPE"), (String) map.get("COLUMN_COMMENT"));
+                    } else {
+                        ddl = String.format("%s `%s` %s COMMENT '%s',\n", ddl, (String) map.get("COLUMN_NAME"),
+                                (String) map.get("DATA_TYPE"), (String) map.get("COLUMN_COMMENT"));
+                    }
+                }
+            } else {
+                if (cnt == res.size()) {
+                    ddl = String.format("%s `%s` %s COMMENT '%s'", ddl, (String) map.get("COLUMN_NAME"),
+                            (String) map.get("DATA_TYPE"), (String) map.get("COLUMN_COMMENT"));
+                } else {
+                    ddl = String.format("%s `%s` %s COMMENT '%s',\n", ddl, (String) map.get("COLUMN_NAME"),
+                            (String) map.get("DATA_TYPE"), (String) map.get("COLUMN_COMMENT"));
+                }
+            }
+            cnt += 1;
+        }
+        SemanticQueryResp s2 = d.executeSqlddl(sql1, modelReq.getDatabaseId());
+        List<Map<String, Object>> res2 = s2.getResultList();
+        for (Map<String, Object> map : res2) {
+            ddl = String.format("%s)COMMENT='%s';", ddl, (String) map.get("TABLE_COMMENT"));
+        }
+        modelReq.setDdl(ddl);
         ModelDO modelDO = ModelConverter.convert(modelReq, user);
         modelRepository.createModel(modelDO);
         batchCreateDimension(modelDO, user);
@@ -125,11 +223,12 @@ public class ModelServiceImpl implements ModelService {
         ModelFilter modelFilter = new ModelFilter();
         BeanUtils.copyProperties(metaFilter, modelFilter);
         List<ModelResp> modelResps = ModelConverter.convertList(modelRepository.getModelList(modelFilter));
-        if (modelFilter.getDataSetId() != null) {
-            DataSetResp dataSetResp = dataSetService.getDataSet(modelFilter.getDataSetId());
-            return modelResps.stream().filter(modelResp -> dataSetResp.getAllModels().contains(modelResp.getId()))
-                    .collect(Collectors.toList());
-        }
+        //hyx
+        //if (modelFilter.getDataSetId() != null) {
+        //DataSetResp dataSetResp = dataSetService.getDataSet(modelFilter.getDataSetId());
+        //return modelResps.stream().filter(modelResp -> dataSetResp.getAllModels().contains(modelResp.getId()))
+        //.collect(Collectors.toList());
+        //}
         return modelResps;
     }
 

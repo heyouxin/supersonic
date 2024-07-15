@@ -45,6 +45,9 @@ public class LLMReq {
     @Data
     public static class LLMSchema {
 
+        //hyx
+        private String ddl;
+
         private String domainName;
 
         private String dataSetName;

@@ -123,14 +123,8 @@ export const layout: RunTimeLayoutConfig = (params) => {
     },
     logo: (
       <Space>
-        <S2Icon
-          icon={ICON.iconlogobiaoshi}
-          size={30}
-          color="#1672fa"
-          style={{ display: 'inline-block', marginTop: 8 }}
-        />
         <div className="logo" style={{ position: 'relative', top: '-2px' }}>
-          SuperSonic
+          GTJA
         </div>
       </Space>
     ),

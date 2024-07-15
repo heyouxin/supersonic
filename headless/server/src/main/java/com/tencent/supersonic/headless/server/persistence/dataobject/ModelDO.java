@@ -14,6 +14,9 @@ public class ModelDO {
     @TableId(value = "id", type = IdType.AUTO)
     private Long id;
 
+    //hyx
+    private String ddl;
+
     private Long domainId;
 
     private Long tagObjectId;

@@ -35,4 +35,6 @@ public interface DatabaseService {
     SemanticQueryResp getTables(Long id, String db);
 
     SemanticQueryResp getColumns(Long id, String db, String table);
+
+    SemanticQueryResp executeSqlddl(String sql, Long id);
 }

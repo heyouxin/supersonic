@@ -80,6 +80,12 @@ public class LLMRequestService {
         llmSchema.setDataSetName(dataSetIdToName.get(dataSetId));
         llmSchema.setDomainName(dataSetIdToName.get(dataSetId));
 
+        //hyxx 看这里是否取到。
+        //SchemaElement ele =semanticSchema.getDataSet(dataSetId);
+        String s = semanticSchema.getDataSet(dataSetId).getDdl();
+        llmSchema.setDdl(s);
+
+
         List<String> fieldNameList = getFieldNameList(queryCtx, dataSetId, llmParserConfig);
         fieldNameList.add(TimeDimensionEnum.DAY.getChName());
         llmSchema.setFieldNameList(fieldNameList);

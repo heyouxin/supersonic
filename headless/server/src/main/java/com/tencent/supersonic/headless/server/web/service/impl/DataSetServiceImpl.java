@@ -13,6 +13,7 @@ import com.tencent.supersonic.common.pojo.exception.InvalidArgumentException;
 import com.tencent.supersonic.common.util.BeanMapper;
 import com.tencent.supersonic.common.jsqlparser.SqlSelectHelper;
 import com.tencent.supersonic.headless.api.pojo.DataSetDetail;
+import com.tencent.supersonic.headless.api.pojo.DataSetModelConfig;
 import com.tencent.supersonic.headless.api.pojo.QueryConfig;
 import com.tencent.supersonic.headless.api.pojo.enums.TagDefineType;
 import com.tencent.supersonic.headless.api.pojo.request.DataSetReq;
@@ -20,6 +21,8 @@ import com.tencent.supersonic.headless.api.pojo.request.QueryDataSetReq;
 import com.tencent.supersonic.headless.api.pojo.request.QuerySqlReq;
 import com.tencent.supersonic.headless.api.pojo.request.QueryStructReq;
 import com.tencent.supersonic.headless.api.pojo.request.SemanticQueryReq;
+//import com.tencent.supersonic.headless.api.pojo.response.*;
+import com.tencent.supersonic.headless.api.pojo.response.ModelResp;
 import com.tencent.supersonic.headless.api.pojo.response.DataSetResp;
 import com.tencent.supersonic.headless.api.pojo.response.DimensionResp;
 import com.tencent.supersonic.headless.api.pojo.response.DomainResp;
@@ -28,6 +31,8 @@ import com.tencent.supersonic.headless.api.pojo.response.TagItem;
 import com.tencent.supersonic.headless.server.persistence.dataobject.DataSetDO;
 import com.tencent.supersonic.headless.server.persistence.mapper.DataSetDOMapper;
 import com.tencent.supersonic.headless.server.pojo.MetaFilter;
+//import com.tencent.supersonic.headless.server.web.service.*;
+import com.tencent.supersonic.headless.server.web.service.ModelService;
 import com.tencent.supersonic.headless.server.web.service.DataSetService;
 import com.tencent.supersonic.headless.server.web.service.DimensionService;
 import com.tencent.supersonic.headless.server.web.service.DomainService;
@@ -73,13 +78,33 @@ public class DataSetServiceImpl
     @Autowired
     private TagMetaService tagMetaService;
 
+    @Autowired
+    private ModelService modelService;
+
     @Override
     public DataSetResp save(DataSetReq dataSetReq, User user) {
         dataSetReq.createdBy(user.getName());
+        List<DataSetModelConfig> dsm = dataSetReq.getDataSetDetail().getDataSetModelConfigs();
+        //hyx这里来创建ddl
+        String ddl = "";
+        int cnt = 1;
+        for (DataSetModelConfig d : dsm) {
+            ModelResp ms = modelService.getModel(d.getId());
+            if (cnt == 1) {
+                ddl = String.format("%s%s", ddl, ms.getDdl());
+            } else {
+                ddl = String.format("%s\n%s", ddl, ms.getDdl());
+            }
+            cnt += 1;
+        }
+        //metricService  dimensionService
+        //DimensionResp dimension = dimensionService.getDimension(9L);
+        dataSetReq.setDdl(ddl);
+        //ModelResp ms = modelService.getModel(5L);
         DataSetDO dataSetDO = convert(dataSetReq);
         dataSetDO.setStatus(StatusEnum.ONLINE.getCode());
         DataSetResp dataSetResp = convert(dataSetDO);
-        conflictCheck(dataSetResp);
+        //conflictCheck(dataSetResp);
         save(dataSetDO);
         dataSetResp.setId(dataSetDO.getId());
         return dataSetResp;

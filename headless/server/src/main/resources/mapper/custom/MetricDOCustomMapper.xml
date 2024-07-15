@@ -87,13 +87,27 @@
         </foreach>
     </insert>
 
-    <update id="batchUpdateStatus" parameterType="java.util.List">
-        <foreach collection="list" item="metric" separator=";">
-            update s2_metric
-            set status = #{metric.status,jdbcType=INTEGER},
-            updated_at = #{metric.updatedAt,jdbcType=TIMESTAMP},
-            updated_by = #{metric.updatedBy,jdbcType=VARCHAR}
-            where id = #{metric.id,jdbcType=BIGINT}
+  <update id="batchUpdateStatus" parameterType="java.util.List">
+        update s2_metric
+        set
+        status = case
+        <foreach collection="list" item="metric" separator=" ">
+            when id = #{metric.id,jdbcType=BIGINT} then #{metric.status,jdbcType=INTEGER}
+        </foreach>
+        end,
+        updated_by = case
+        <foreach collection="list" item="metric" separator=" ">
+            when id = #{metric.id,jdbcType=BIGINT} then #{metric.updatedBy,jdbcType=VARCHAR}
+        </foreach>
+        end,
+        updated_at = case
+        <foreach collection="list" item="metric" separator=" ">
+            when id = #{metric.id,jdbcType=BIGINT} then #{metric.updatedAt,jdbcType=TIMESTAMP}
+        </foreach>
+        end
+        where id in
+        <foreach collection="list" item="metric" open="(" separator="," close=")">
+            #{metric.id,jdbcType=BIGINT}
         </foreach>
     </update>
 

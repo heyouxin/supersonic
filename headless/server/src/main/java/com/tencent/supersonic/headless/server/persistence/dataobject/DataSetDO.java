@@ -13,6 +13,9 @@ public class DataSetDO {
     @TableId(type = IdType.AUTO)
     private Long id;
 
+    //hyx
+    private String ddl;
+
     private Long domainId;
 
     private String name;

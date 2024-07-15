@@ -27,6 +27,8 @@ import java.util.stream.Collectors;
 @NoArgsConstructor
 public class ModelResp extends SchemaItem {
 
+    //hyx
+    private String ddl;
     private Long domainId;
 
     private Long databaseId;

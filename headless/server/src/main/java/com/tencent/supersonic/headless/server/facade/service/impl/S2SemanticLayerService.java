@@ -37,6 +37,7 @@ import com.tencent.supersonic.headless.core.cache.QueryCache;
 import com.tencent.supersonic.headless.core.executor.QueryExecutor;
 import com.tencent.supersonic.headless.core.pojo.QueryStatement;
 import com.tencent.supersonic.headless.core.translator.SemanticTranslator;
+import com.tencent.supersonic.headless.core.translator.calcite.s2sql.DataSource;
 import com.tencent.supersonic.headless.core.translator.calcite.s2sql.SemanticModel;
 import com.tencent.supersonic.headless.core.utils.ComponentFactory;
 import com.tencent.supersonic.headless.server.annotation.S2DataPermission;
@@ -56,14 +57,14 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Map;
-import java.util.Objects;
+import java.util.List;
 import java.util.Set;
+import java.util.HashMap;
+import java.util.Objects;
 import java.util.stream.Collectors;
-
+import java.util.LinkedHashSet;
+import java.util.ArrayList;
 
 @Service
 @Slf4j
@@ -107,11 +108,17 @@ public class S2SemanticLayerService implements SemanticLayerService {
     @Override
     public SemanticTranslateResp translate(SemanticQueryReq queryReq, User user) throws Exception {
         QueryStatement queryStatement = buildQueryStatement(queryReq, user);
+        Map<String, String> dataSourceMap = new HashMap<>();
+        Map<String, DataSource> dataSourceMap1 = queryStatement.getSemanticModel().getDatasourceMap();
+        for (Map.Entry<String, DataSource> entry : dataSourceMap1.entrySet()) {
+            dataSourceMap.put(entry.getKey(), entry.getValue().getTableQuery());
+        }
         semanticTranslator.translate(queryStatement);
         return SemanticTranslateResp.builder()
                 .querySQL(queryStatement.getSql())
                 .isOk(queryStatement.isOk())
                 .errMsg(queryStatement.getErrMsg())
+                .datasourceMap(dataSourceMap)
                 .build();
     }
 

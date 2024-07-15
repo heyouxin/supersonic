@@ -62,6 +62,7 @@ public class NL2SQLParser implements ChatParser {
             + "#History SQL: %s\n"
             + "#Rewritten Question: ";
 
+    //hyx llm parse调用这里
     @Override
     public void parse(ChatParseContext chatParseContext, ParseResp parseResp) {
         if (!chatParseContext.enableNL2SQL() || checkSkip(parseResp)) {
@@ -72,7 +73,7 @@ public class NL2SQLParser implements ChatParser {
         QueryNLReq queryNLReq = QueryReqConverter.buildText2SqlQueryReq(chatParseContext);
         addDynamicExemplars(chatParseContext.getAgent().getId(), queryNLReq);
 
-        ChatQueryService chatQueryService = ContextUtils.getBean(ChatQueryService.class);
+        ChatQueryService chatQueryService = ContextUtils.<ChatQueryService>getBean(ChatQueryService.class);
         ParseResp text2SqlParseResp = chatQueryService.performParsing(queryNLReq);
         if (!ParseResp.ParseState.FAILED.equals(text2SqlParseResp.getState())) {
             parseResp.getSelectedParses().addAll(text2SqlParseResp.getSelectedParses());

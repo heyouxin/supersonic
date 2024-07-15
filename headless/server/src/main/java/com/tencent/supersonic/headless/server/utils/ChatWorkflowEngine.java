@@ -1,5 +1,6 @@
 package com.tencent.supersonic.headless.server.utils;
 
+
 import com.tencent.supersonic.common.util.ContextUtils;
 import com.tencent.supersonic.common.util.JsonUtil;
 import com.tencent.supersonic.headless.api.pojo.SemanticParseInfo;
@@ -16,6 +17,7 @@ import com.tencent.supersonic.headless.chat.query.QueryManager;
 import com.tencent.supersonic.headless.chat.query.SemanticQuery;
 import com.tencent.supersonic.headless.chat.query.rule.RuleSemanticQuery;
 import com.tencent.supersonic.headless.server.facade.service.SemanticLayerService;
+//import com.tencent.supersonic.headless.server.facade.service.impl.S2SemanticLayerService;
 import com.tencent.supersonic.headless.server.processor.ResultProcessor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
@@ -24,10 +26,12 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
-
+//import java.util.HashMap;
+import java.util.Map;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
+
 
 @Service
 @Slf4j
@@ -91,12 +95,17 @@ public class ChatWorkflowEngine {
                 if (semanticQuery instanceof RuleSemanticQuery) {
                     continue;
                 }
+                //hyx 当模式为大模型时不用correct, 改动在BaseSemanticCorrector
+                //if(semanticQuery.getQueryMode().equals("LLM_S2SQL")){
+                //continue;
+                //}else{
                 for (SemanticCorrector corrector : semanticCorrectors) {
                     corrector.correct(queryCtx, semanticQuery.getParseInfo());
                     if (!ChatWorkflowState.CORRECTING.equals(queryCtx.getChatWorkflowState())) {
                         break;
                     }
                 }
+                //}
             }
         }
     }
@@ -121,9 +130,27 @@ public class ChatWorkflowEngine {
                 semanticQuery.setParseInfo(parseInfo);
                 SemanticQueryReq semanticQueryReq = semanticQuery.buildSemanticQueryReq();
                 SemanticLayerService queryService = ContextUtils.getBean(SemanticLayerService.class);
+                //S2SemanticLayerService s2Service = ContextUtils.getBean(S2SemanticLayerService.class);
+                //hyx 这里从correct 到query sql语句的替换
                 SemanticTranslateResp explain = queryService.translate(semanticQueryReq, chatQueryContext.getUser());
-                parseInfo.getSqlInfo().setQuerySQL(explain.getQuerySQL());
-
+                if (semanticQuery.getQueryMode().equals("LLM_S2SQL")) {
+                    String input = parseInfo.getSqlInfo().getCorrectedS2SQL();
+                    Map<String, String> replacementMap = explain.getDatasourceMap();
+                    replacementMap.put("NULLS LAST","");
+                    StringBuilder result = new StringBuilder(input);
+                    for (Map.Entry<String, String> entry : replacementMap.entrySet()) {
+                        String key = entry.getKey();
+                        String value = entry.getValue();
+                        int index = result.indexOf(key);
+                        while (index != -1) {
+                            result.replace(index, index + key.length(), value);
+                            index = result.indexOf(key, index + value.length());
+                        }
+                    }
+                    parseInfo.getSqlInfo().setQuerySQL(result.toString());
+                } else {
+                    parseInfo.getSqlInfo().setQuerySQL(explain.getQuerySQL());
+                }
                 keyPipelineLog.info("SqlInfoProcessor results:\n"
                                 + "Parsed S2SQL: {}\nCorrected S2SQL: {}\nQuery SQL: {}",
                         StringUtils.normalizeSpace(parseInfo.getSqlInfo().getParsedS2SQL()),

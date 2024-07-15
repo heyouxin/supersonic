@@ -88,7 +88,9 @@ export const getFormattedValue = (value: number | string, remainZero?: boolean) 
 export const formatNumberWithCN = (num: number) => {
   if (isNaN(num)) return '-';
   if (num >= 10000) {
-    return (num / 10000).toFixed(1) + "万";
+    //return (num / 10000).toFixed(1) + "万";
+    //hyx
+	return formatByDecimalPlaces(num, 2);
   } else {
     return formatByDecimalPlaces(num, 2);
   }

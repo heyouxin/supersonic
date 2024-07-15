@@ -32,7 +32,10 @@ public abstract class BaseSemanticCorrector implements SemanticCorrector {
             if (StringUtils.isBlank(semanticParseInfo.getSqlInfo().getCorrectedS2SQL())) {
                 return;
             }
-            doCorrect(chatQueryContext, semanticParseInfo);
+            //hyx 如果是LLM不用做correct
+            if (!semanticParseInfo.getQueryMode().equals("LLM_S2SQL")) {
+                doCorrect(chatQueryContext, semanticParseInfo);
+            }
             log.debug("sqlCorrection:{} sql:{}", this.getClass().getSimpleName(), semanticParseInfo.getSqlInfo());
         } catch (Exception e) {
             log.error(String.format("correct error,sqlInfo:%s", semanticParseInfo.getSqlInfo()), e);

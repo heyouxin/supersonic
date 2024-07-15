@@ -82,25 +82,27 @@
         </foreach>
     </insert>
 
-    <update id="batchUpdate" parameterType="java.util.List">
-        <foreach collection="list" item="dimension" separator=";">
-            update s2_dimension
-            set name = #{dimension.name,jdbcType=VARCHAR},
-            biz_name = #{dimension.bizName,jdbcType=VARCHAR},
-            description = #{dimension.description,jdbcType=VARCHAR},
-            status = #{dimension.status,jdbcType=INTEGER},
-            model_id = #{dimension.modelId,jdbcType=BIGINT},
-            type = #{dimension.type,jdbcType=VARCHAR},
-            type_params = #{dimension.typeParams,jdbcType=VARCHAR},
-            datasource_id = #{dimension.datasourceId,jdbcType=BIGINT},
-            created_at = #{dimension.createdAt,jdbcType=TIMESTAMP},
-            created_by = #{dimension.createdBy,jdbcType=VARCHAR},
-            updated_by = #{dimension.updatedBy,jdbcType=VARCHAR},
-            updated_at = #{dimension.updatedAt,jdbcType=TIMESTAMP},
-            semantic_type = #{dimension.semanticType,jdbcType=VARCHAR},
-            sensitive_level = #{dimension.sensitiveLevel,jdbcType=INTEGER},
-            expr = #{dimension.expr,jdbcType=LONGVARCHAR}
-            where id = #{dimension.id,jdbcType=BIGINT}
+    <update id="batchUpdateStatus" parameterType="java.util.List">
+        update s2_dimension
+        set
+        status = case
+        <foreach collection="list" item="dimension" separator=" ">
+            when id = #{dimension.id,jdbcType=BIGINT} then #{dimension.status,jdbcType=INTEGER}
+        </foreach>
+        end,
+        updated_by = case
+        <foreach collection="list" item="dimension" separator=" ">
+            when id = #{dimension.id,jdbcType=BIGINT} then #{dimension.updatedBy,jdbcType=VARCHAR}
+        </foreach>
+        end,
+        updated_at = case
+        <foreach collection="list" item="dimension" separator=" ">
+            when id = #{dimension.id,jdbcType=BIGINT} then #{dimension.updatedAt,jdbcType=TIMESTAMP}
+        </foreach>
+        end
+        where id in
+        <foreach collection="list" item="dimension" open="(" separator="," close=")">
+            #{dimension.id,jdbcType=BIGINT}
         </foreach>
     </update>
 

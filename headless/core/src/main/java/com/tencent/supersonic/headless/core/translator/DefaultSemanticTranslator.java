@@ -26,6 +26,7 @@ public class DefaultSemanticTranslator implements SemanticTranslator {
 
     public void translate(QueryStatement queryStatement) {
         try {
+            //hyx 这步已经做好
             parse(queryStatement);
             optimize(queryStatement);
         } catch (Exception e) {
@@ -79,6 +80,7 @@ public class DefaultSemanticTranslator implements SemanticTranslator {
                 List<String[]> tables = new ArrayList<>();
                 boolean isSingleTable = dataSetQueryParam.getTables().size() == 1;
                 for (MetricTable metricTable : dataSetQueryParam.getTables()) {
+                    //hyx 这步改变了t_7视图
                     QueryStatement tableSql = parserSql(metricTable, isSingleTable,
                             dataSetQueryParam, queryStatement);
                     if (isSingleTable && Objects.nonNull(tableSql.getDataSetQueryParam())
@@ -140,7 +142,10 @@ public class DefaultSemanticTranslator implements SemanticTranslator {
         metricReq.setNativeQuery(!AggOption.isAgg(metricTable.getAggOption()));
         QueryStatement tableSql = new QueryStatement();
         tableSql.setIsS2SQL(false);
+        //hyx view查全部
+        //metricReq.getMetrics().add("*");
         tableSql.setMetricQueryParam(metricReq);
+        //tableSql.getMetricQueryParam().getMetrics().add("*");
         tableSql.setMinMaxTime(queryStatement.getMinMaxTime());
         tableSql.setEnableOptimize(queryStatement.getEnableOptimize());
         tableSql.setDataSetId(queryStatement.getDataSetId());

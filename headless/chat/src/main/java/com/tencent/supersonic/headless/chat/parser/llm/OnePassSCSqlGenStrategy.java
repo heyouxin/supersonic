@@ -20,7 +20,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-
 @Service
 @Slf4j
 public class OnePassSCSqlGenStrategy extends SqlGenStrategy {
@@ -50,7 +49,7 @@ public class OnePassSCSqlGenStrategy extends SqlGenStrategy {
             Prompt prompt = generatePrompt(llmReq, exemplars);
             prompt2Exemplar.put(prompt, exemplars);
         }
-
+        String modelName = llmReq.getModelConfig().getChatModel().getModelName();
         //3.perform multiple self-consistency inferences parallelly
         Map<Prompt, String> prompt2Output = new ConcurrentHashMap<>();
         prompt2Exemplar.keySet().parallelStream().forEach(prompt -> {
@@ -58,11 +57,16 @@ public class OnePassSCSqlGenStrategy extends SqlGenStrategy {
                     ChatLanguageModel chatLanguageModel = getChatLanguageModel(llmReq.getModelConfig());
                     Response<AiMessage> response = chatLanguageModel.generate(prompt.toUserMessage());
                     String result = response.content().text();
+                    if (modelName.equals("sqlcoder-8b")) {
+                        result = String.format("%s", result);
+                    } else {
+                        result = result.replace("```sql", "");
+                        result = result.replace("```", "");
+                    }
                     prompt2Output.put(prompt, result);
                     keyPipelineLog.info("OnePassSCSqlGenStrategy modelResp:\n{}", result);
                 }
         );
-
         //4.format response.
         Pair<String, Map<String, Double>> sqlMapPair = ResponseHelper.selfConsistencyVote(
                 Lists.newArrayList(prompt2Output.values()));
@@ -72,7 +76,6 @@ public class OnePassSCSqlGenStrategy extends SqlGenStrategy {
         llmResp.setSqlOutput(sqlMapPair.getLeft());
         //TODO: should use the same few-shot exemplars as the one chose by self-consistency vote
         llmResp.setSqlRespMap(ResponseHelper.buildSqlRespMap(exemplarsList.get(0), sqlMapPair.getRight()));
-
         return llmResp;
     }
 
@@ -88,9 +91,10 @@ public class OnePassSCSqlGenStrategy extends SqlGenStrategy {
 
         Map<String, Object> variable = new HashMap<>();
         variable.put("exemplar", exemplarsStr);
-        variable.put("question", questionAugmented);
+        variable.put("questionAugmented", questionAugmented);
         variable.put("schema", dataSemanticsStr);
-
+        variable.put("question", llmReq.getQueryText());
+        variable.put("ddl", llmReq.getSchema().getDdl());
         // use custom prompt template if provided.
         PromptConfig promptConfig = llmReq.getPromptConfig();
         String prompTemplate = INSTRUCTION;
